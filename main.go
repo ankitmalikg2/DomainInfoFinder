@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 
 const MAX = 300
 const NewDomainsFileName = "domain-names.txt"
-const SkipLines = 47543
+const SkipLines = 0
 
 //ReadFileIntoArray it reads the file and sent Array of strings as output
 func ReadFileIntoArray(filePath string) ([]string, error) {
@@ -52,6 +53,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed opening file: %s", err)
 	}
+	// (gmail|yahoo|hotmail|outlook)
+	var validRegexEmail = regexp.MustCompile(`(gmail|yahoo|hotmail|outlook)`)
 	count := 0
 	successCount := 0
 
@@ -85,7 +88,9 @@ func main() {
 			// fmt.Printf("%+v ", registrantInfo)
 
 			//saving the data
-			if !reflect.DeepEqual(registrantInfo, models.DomainInfo{}) {
+			if !reflect.DeepEqual(registrantInfo, models.DomainInfo{}) &&
+				strings.TrimSpace(strings.ToUpper(registrantInfo.RegistrantCountry)) == "US" &&
+				validRegexEmail.MatchString(registrantInfo.RegistrantEmail) {
 				successCount++
 				errMap := SaveDispatch(domain, registrantInfo)
 				fmt.Println(errMap)
